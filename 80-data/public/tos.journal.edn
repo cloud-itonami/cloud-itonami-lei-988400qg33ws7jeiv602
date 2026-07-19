@@ -1,0 +1,5 @@
+[["kepco-tos-1" :tos/full-text "" 1 :add]
+ ["kepco-tos-1" :tos/source-url "https://www.kepco.co.kr/home/service/legalnotice/conts.do" 1 :add]
+ ["kepco-tos-1" :tos/retrieved-at "2026-07-19T09:04:45Z" 1 :add]
+ ["kepco-tos-1" :tos/sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" 1 :add]
+ ["kepco-tos-1" :tos/doc-type :legal-notice 1 :add]]
