@@ -18,6 +18,13 @@ Advisor/Governor actor. Part of the worldwide-scope extension (batch ASIA-UTIL-1
 ## Contents
 
 - `80-data/public/tos.journal.edn` — EDN quad-log of the archived Legal Notice (법적고지).
+- `facts/catalog.edn` — 61 live-checked public-register citations (GLEIF, U.S. SEC EDGAR,
+  the issuer's own Legal Notice), each an exact substring of a fetched response body,
+  classified `:identity` / `:attribute` / `:definition`. The header records why the Korean
+  register of record (RA000657, National Tax Service) cannot be cited per-entity.
+- `tools/verify_citations.cljs` — nbb gate: GET every `:cite/url`, require HTTP 2xx and the
+  expected substring (`nbb tools/verify_citations.cljs facts/catalog.edn --min 30`).
+  Exit 0 = all checked, 1 = drift, 2 = could not answer.
 - `NOTICE` — copyright/attribution statement.
 - `blueprint.edn` — machine-readable company identity record.
 

@@ -1,0 +1,469 @@
+;; Verified public-register citations for the legal entity archived by this repository.
+;;
+;; Every row is checked live by tools/verify_citations.cljs:
+;;   * GET :cite/url must answer HTTP 2xx
+;;   * :cite/expect-substring must appear in the response body
+;;
+;; A URL that cannot be fetched, or whose body no longer carries the claim, is a
+;; DRIFT and fails the gate. Nothing is recorded here that was not retrieved.
+;;
+;; THREE independent authorities are cited, not one:
+;;   * GLEIF, the global LEI system
+;;   * the United States, via the SEC's EDGAR submissions API (KEPCO is a
+;;     foreign private issuer, NYSE ticker KEP, CIK 0000887225)
+;;   * the issuer itself, at the Legal Notice page this repository archives
+;;
+;; WHY THE KOREAN REGISTER OF RECORD IS NOT CITED. GLEIF names RA000657 -- the
+;; National Tax Service (국세청) Business registration -- as BOTH the register of
+;; record and the validation authority for this entity (rows gleif-registered-at
+;; and gleif-validated-at). That register publishes no per-entity GET URL:
+;; www.nts.go.kr answers HTTP 200 at its root (checked 2026-08-22) but carries no
+;; record data there, and the business-registration status lookup runs behind
+;; Hometax POST/session flows this gate cannot replay. DART (dart.fss.or.kr) was
+;; considered and not cited: its root answers 200, but per-entity data sits behind
+;; POST search or the keyed OpenDART API, and a search page that echoes the query
+;; is not a citation. So the entity's own Korean registration (120-82-00052)
+;; rests on GLEIF alone. What the catalog does instead is corroborate the entity
+;; through a second STATE authority that does answer on stable URLs:
+;;
+;;   GLEIF says the legal seat is 전력로 55, Naju-si, postal 58322 (rows
+;;   gleif-address-jeollyeok, gleif-city, gleif-postal) -> the SEC prints
+;;   55 JEOLLYEOK-RO, NAJU-SI, 58322 in its own business-address record
+;;   (rows sec-street, sec-city, sec-zip). GLEIF records the English name
+;;   KOREA ELECTRIC POWER CORPORATION -> EDGAR prints the same full name in its
+;;   formerNames record, and prints KOREA ELECTRIC POWER CORP as the current
+;;   registrant name. The SEC and GLEIF never consulted each other.
+;;
+;; ONE NAME, TWO ENCODINGS. GLEIF returns the Korean legal name 한국전력공사 as
+;; \uXXXX escapes -- the Hangul bytes occur NOWHERE in the GLEIF response, so the
+;; gleif-legal-name-korean row matches the escape sequence. The issuer's own page
+;; serves the same name as raw UTF-8, so the issuer-* rows match the Hangul
+;; directly. Expecting the wrong encoding on either URL would fail; both rows
+;; keep that fact checked.
+;;
+;; WHAT IS DELIBERATELY NOT CITED. GLEIF's nextRenewalDate moves every year by
+;; construction; a row on it would go red on schedule while saying nothing about
+;; the entity, so it is left out. The KRX listing (ticker 015760, recorded in
+;; blueprint.edn) is not cited: KRX market data sits behind POST APIs.
+;;
+;; :cite/row-kind is the honest part of this catalog and should be read before
+;; the claims:
+;;
+;;   :identity   the substring names this entity, its identifiers, or a specific
+;;               related legal entity. Point the URL at a different company and
+;;               the row fails.
+;;   :attribute  the substring is TRUE OF THIS ENTITY BUT NOT ONLY OF IT (status
+;;               ACTIVE, country KR, city Naju-si, SIC 4911). Such a row can
+;;               survive a swap to a similar company. It is recorded because it
+;;               is checked and true, not because it identifies.
+;;   :definition the row resolves a code used by another row (RA000657, WUJC).
+;;               It says the named register or legal form exists; it says
+;;               nothing about KEPCO.
+;;
+;; Of the entries below, 30 are :identity, 23 are :attribute and 8 are
+;; :definition. A reader who treats all 61 as identifying would overstate what
+;; this catalog proves -- which is the error this field exists to prevent.
+;;
+;; Substrings are taken from the RAW response body and were each checked against
+;; the fetched bytes before this file was written (2026-08-22, GLEIF golden copy
+;; of 2026-08-21). The child-count and isin-count rows go red when GLEIF adds or
+;; removes a relationship; that is correct DRIFT, not a false alarm.
+{:catalog/subject
+ #:company{:legal-name "한국전력공사"
+           :other-name "KOREA ELECTRIC POWER CORPORATION"
+           :lei "988400QG33WS7JEIV602"
+           :jurisdiction "KR"
+           :registered-at "RA000657"
+           :registered-as "120-82-00052"
+           :legal-form "WUJC"
+           :website "https://www.kepco.co.kr"}
+ :catalog/authorities
+ [{:authority/id :gleif
+   :authority/name "Global Legal Entity Identifier Foundation"
+   :authority/root "https://api.gleif.org/"}
+  {:authority/id :us-sec
+   :authority/name "U.S. Securities and Exchange Commission, EDGAR"
+   :authority/root "https://data.sec.gov/"}
+  {:authority/id :issuer
+   :authority/name "KEPCO (Korea Electric Power Corporation), at its own published website"
+   :authority/root "https://www.kepco.co.kr/"}]
+ :catalog/unreachable
+ [{:unreachable/authority "National Tax Service Business registration (RA000657, 국세청 사업자등록)"
+   :unreachable/url "https://www.nts.go.kr/"
+   :unreachable/observed "HTTP 200 at the root (2026-08-22), but no per-entity GET URL exists; the status lookup runs behind Hometax POST/session flows"
+   :unreachable/consequence "The register GLEIF names as this entity's register of record and validation authority is NOT cited below. The registration number 120-82-00052 rests on GLEIF alone."}
+  {:unreachable/authority "Financial Supervisory Service DART (Korea)"
+   :unreachable/url "https://dart.fss.or.kr/"
+   :unreachable/observed "HTTP 200 at the root (2026-08-22), but per-entity data sits behind POST search or the keyed OpenDART API"
+   :unreachable/consequence "Rejected deliberately. A search-echo row would pass forever and prove nothing."}]
+ :catalog/entries
+ [
+  {:cite/id "gleif-lei"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"lei\":\"988400QG33WS7JEIV602\""
+   :cite/claim "GLEIF issues LEI 988400QG33WS7JEIV602."}
+  {:cite/id "gleif-legal-name-korean"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"legalName\":{\"name\":\"\\ud55c\\uad6d\\uc804\\ub825\\uacf5\\uc0ac\",\"language\":\"ko\"}"
+   :cite/expect-note "한국전력공사 as \\u escapes -- the Hangul bytes occur nowhere in the GLEIF response"
+   :cite/claim "The legal name on that LEI is 한국전력공사, recorded in Korean. GLEIF returns it \\u-escaped; this row keeps that encoding fact checked."}
+  {:cite/id "gleif-name-english"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"name\":\"KOREA ELECTRIC POWER CORPORATION\",\"language\":\"en\",\"type\":\"ALTERNATIVE_LANGUAGE_LEGAL_NAME\""
+   :cite/claim "GLEIF records KOREA ELECTRIC POWER CORPORATION as the English alternative-language legal name. Corroborated independently by sec-former-name."}
+  {:cite/id "gleif-registered-as"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"registeredAs\":\"120-82-00052\""
+   :cite/claim "Business registration number 120-82-00052 in the Korean register. See the header: that register itself is not citable per-entity."}
+  {:cite/id "gleif-validated-as"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"validatedAs\":\"120-82-00052\""
+   :cite/claim "GLEIF validated the record against the SAME number, not merely recorded it."}
+  {:cite/id "gleif-registered-at"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"registeredAt\":{\"id\":\"RA000657\""
+   :cite/claim "GLEIF names RA000657 as the register of record. Resolved by the gleif-ra-* rows; see the header for why it is not cited directly."}
+  {:cite/id "gleif-validated-at"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"validatedAt\":{\"id\":\"RA000657\""
+   :cite/claim "Validation authority is also RA000657."}
+  {:cite/id "gleif-address-jeollyeok"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"addressLines\":[\"\\uc804\\ub77c\\ub0a8\\ub3c4 \\ub098\\uc8fc\\uc2dc \\uc804\\ub825\\ub85c 55\""
+   :cite/expect-note "전라남도 나주시 전력로 55 as \\u escapes"
+   :cite/claim "First legal-address line: Jeollyeok-ro 55, Naju-si, Jeollanam-do. Corroborated in Latin script by sec-street."}
+  {:cite/id "gleif-city"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"city\":\"Naju-si\""
+   :cite/claim "City Naju-si. Corroborated independently by sec-city."}
+  {:cite/id "gleif-region"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"region\":\"KR-46\""
+   :cite/claim "Subdivision KR-46 (Jeollanam-do)."}
+  {:cite/id "gleif-postal"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"postalCode\":\"58322\""
+   :cite/claim "Postal code 58322. Corroborated independently by sec-zip."}
+  {:cite/id "gleif-jurisdiction"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"jurisdiction\":\"KR\""
+   :cite/claim "Jurisdiction KR."}
+  {:cite/id "gleif-legal-form"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"legalForm\":{\"id\":\"WUJC\""
+   :cite/claim "ELF code WUJC. Resolved by the gleif-elf-* rows."}
+  {:cite/id "gleif-category"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"category\":\"GENERAL\""
+   :cite/claim "Entity category GENERAL (not BRANCH, not FUND)."}
+  {:cite/id "gleif-status-active"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"status\":\"ACTIVE\""
+   :cite/claim "Entity status ACTIVE."}
+  {:cite/id "gleif-reg-status-issued"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"status\":\"ISSUED\""
+   :cite/claim "LEI registration status ISSUED."}
+  {:cite/id "gleif-creation-date"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"creationDate\":\"1981-12-31T00:00:00Z\""
+   :cite/claim "Entity creation date 1981-12-31 on the register."}
+  {:cite/id "gleif-initial-registration"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"initialRegistrationDate\":\"2016-12-06T00:00:00Z\""
+   :cite/claim "This LEI record was first registered on 2016-12-06."}
+  {:cite/id "gleif-managing-lou"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"managingLou\":\"9884008RRMX1X5HV6625\""
+   :cite/claim "The LOU that maintains the record. Resolved by gleif-lou-name."}
+  {:cite/id "gleif-corroboration"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"corroborationLevel\":\"FULLY_CORROBORATED\""
+   :cite/claim "GLEIF corroborated the data against the register, not just the filer."}
+  {:cite/id "gleif-conformity"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"conformityFlag\":\"CONFORMING\""
+   :cite/claim "Record conforms to the GLEIF data-quality rules."}
+  {:cite/id "gleif-spglobal"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"spglobal\":[\"380884\"]"
+   :cite/claim "S&P Global company id mapped to this LEI."}
+  {:cite/id "gleif-no-ocid"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"ocid\":null"
+   :cite/claim "GLEIF holds NO OpenCorporates id for this entity -- recorded because its absence is why no OpenCorporates row appears below."}
+  {:cite/id "gleif-no-parent"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602"
+   :cite/expect-substring "\"direct-parent\":{\"links\":{\"reporting-exception\""
+   :cite/claim "GLEIF has no direct parent for this entity, only a reporting exception -- consistent with state ownership. This is the top of the recorded chain."}
+  {:cite/id "gleif-ra-code"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/registration-authorities/RA000657"
+   :cite/expect-substring "\"code\":\"RA000657\""
+   :cite/claim "RA000657 exists in the GLEIF Registration Authorities List."}
+  {:cite/id "gleif-ra-org"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/registration-authorities/RA000657"
+   :cite/expect-substring "\"internationalOrganizationName\":\"National Tax Service\""
+   :cite/claim "RA000657 is operated by the National Tax Service (국세청)."}
+  {:cite/id "gleif-ra-name"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/registration-authorities/RA000657"
+   :cite/expect-substring "\"internationalName\":\"Business registration\""
+   :cite/claim "Its name is \"Business registration\" (사업자등록)."}
+  {:cite/id "gleif-ra-website"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/registration-authorities/RA000657"
+   :cite/expect-substring "\"website\":\"www.nts.go.kr\""
+   :cite/claim "GLEIF publishes the register's website. See the header for why no row cites it directly."}
+  {:cite/id "gleif-elf-code"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/entity-legal-forms/WUJC"
+   :cite/expect-substring "\"code\":\"WUJC\""
+   :cite/claim "WUJC exists in the ISO 20275 Entity Legal Form list."}
+  {:cite/id "gleif-elf-country"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/entity-legal-forms/WUJC"
+   :cite/expect-substring "\"country\":\"Korea (Republic of)\""
+   :cite/claim "WUJC is a Korean legal form."}
+  {:cite/id "gleif-elf-translit"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/entity-legal-forms/WUJC"
+   :cite/expect-substring "\"transliteratedName\":\"GongGongDanChe\""
+   :cite/claim "WUJC means 공공단체 (public body), transliterated GongGongDanChe."}
+  {:cite/id "gleif-elf-status"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/entity-legal-forms/WUJC"
+   :cite/expect-substring "\"status\":\"ACTV\""
+   :cite/claim "The WUJC code is itself active in the list."}
+  {:cite/id "gleif-lou-name"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/9884008RRMX1X5HV6625"
+   :cite/expect-substring "\"name\":\"KOREA SECURITIES DEPOSITORY\""
+   :cite/claim "The managing LOU is the Korea Securities Depository (한국예탁결제원) -- a specific, named legal entity."}
+  {:cite/id "gleif-lou-number"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/9884008RRMX1X5HV6625"
+   :cite/expect-substring "\"registeredAs\":\"116-82-05363\""
+   :cite/claim "That LOU is itself registered in the same Korean register, under its own number."}
+  {:cite/id "gleif-child-count"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602/direct-children?page%5Bsize%5D=50"
+   :cite/expect-substring "\"total\":9"
+   :cite/claim "GLEIF records exactly 9 direct children today. If a child is added or removed this row goes red, which is correct DRIFT, not a false alarm."}
+  {:cite/id "gleif-child-khnp"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602/direct-children?page%5Bsize%5D=50"
+   :cite/expect-substring "\"name\":\"Korea Hydro & Nuclear Power Co., Ltd\""
+   :cite/claim "GLEIF records Korea Hydro & Nuclear Power as a DIRECT child. The ampersand is NOT escaped in these bytes."}
+  {:cite/id "gleif-child-khnp-lei"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602/direct-children?page%5Bsize%5D=50"
+   :cite/expect-substring "\"lei\":\"9884008CRY5MLCN8OQ43\""
+   :cite/claim "LEI of that child."}
+  {:cite/id "gleif-child-khnp-number"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602/direct-children?page%5Bsize%5D=50"
+   :cite/expect-substring "\"registeredAs\":\"120-86-18943\""
+   :cite/claim "GLEIF records the Korean business registration number for it."}
+  {:cite/id "gleif-child-east-west"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602/direct-children?page%5Bsize%5D=50"
+   :cite/expect-substring "\"name\":\"KOREA EAST-WEST POWER CO.,LTD.\""
+   :cite/claim "Korean direct child (thermal generation spin-off)."}
+  {:cite/id "gleif-child-western"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602/direct-children?page%5Bsize%5D=50"
+   :cite/expect-substring "\"name\":\"Korea Western Power Co., Ltd.\""
+   :cite/claim "Korean direct child."}
+  {:cite/id "gleif-child-midland"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602/direct-children?page%5Bsize%5D=50"
+   :cite/expect-substring "\"name\":\"KOREA MIDLAND POWER Co., LTD\""
+   :cite/claim "Korean direct child."}
+  {:cite/id "gleif-child-southern"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602/direct-children?page%5Bsize%5D=50"
+   :cite/expect-substring "\"name\":\"Korea Southern Power Co., Ltd\""
+   :cite/claim "Korean direct child."}
+  {:cite/id "gleif-child-kdn"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602/direct-children?page%5Bsize%5D=50"
+   :cite/expect-substring "\"name\":\"KEPCO KDN Co.,Ltd.\""
+   :cite/claim "Korean direct child (ICT subsidiary)."}
+  {:cite/id "gleif-child-mangilao"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602/direct-children?page%5Bsize%5D=50"
+   :cite/expect-substring "\"name\":\"MANGILAO INTERMEDIATE HOLDINGS LLC\""
+   :cite/claim "United States direct child, name unrelated to KEPCO -- recorded because the register says so."}
+  {:cite/id "gleif-child-mangilao-number"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602/direct-children?page%5Bsize%5D=50"
+   :cite/expect-substring "\"registeredAs\":\"7403975\""
+   :cite/claim "Its US registration number."}
+  {:cite/id "gleif-isin-count"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602/isins?page%5Bsize%5D=200"
+   :cite/expect-substring "\"total\":228"
+   :cite/claim "228 ISINs are mapped to this LEI today."}
+  {:cite/id "gleif-isin-us500631bg07"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602/isins?page%5Bsize%5D=200"
+   :cite/expect-substring "\"isin\":\"US500631BG07\""
+   :cite/claim "The GLEIF/ANNA ISIN-to-LEI file maps ISIN US500631BG07 to this LEI. The row asserts the MAPPING, not who owns the paper."}
+  {:cite/id "gleif-isin-us50065bbt89"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/988400QG33WS7JEIV602/isins?page%5Bsize%5D=200"
+   :cite/expect-substring "\"isin\":\"US50065BBT89\""
+   :cite/claim "Same file maps ISIN US50065BBT89 to this LEI."}
+  {:cite/id "sec-name"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0000887225.json"
+   :cite/expect-substring "\"name\":\"KOREA ELECTRIC POWER CORP\""
+   :cite/claim "The SEC prints KOREA ELECTRIC POWER CORP as the registrant name -- a register field, not a query echo."}
+  {:cite/id "sec-cik"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0000887225.json"
+   :cite/expect-substring "\"cik\":\"0000887225\""
+   :cite/claim "EDGAR Central Index Key 0000887225."}
+  {:cite/id "sec-former-name"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0000887225.json"
+   :cite/expect-substring "\"name\":\"KOREA ELECTRIC POWER CORPORATION\",\"from\":\"1996-10-30T05:00:00.000Z\""
+   :cite/claim "EDGAR's formerNames record prints the FULL name KOREA ELECTRIC POWER CORPORATION -- the same string GLEIF records as the English legal name (gleif-name-english). The SEC and GLEIF never consulted each other."}
+  {:cite/id "sec-ticker"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0000887225.json"
+   :cite/expect-substring "\"tickers\":[\"KEP\"]"
+   :cite/claim "NYSE ticker KEP."}
+  {:cite/id "sec-exchange"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000887225.json"
+   :cite/expect-substring "\"exchanges\":[\"NYSE\"]"
+   :cite/claim "Listed on the NYSE."}
+  {:cite/id "sec-sic"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000887225.json"
+   :cite/expect-substring "\"sicDescription\":\"Electric Services\""
+   :cite/claim "SIC classification Electric Services (4911)."}
+  {:cite/id "sec-street"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0000887225.json"
+   :cite/expect-substring "\"street1\":\"55 JEOLLYEOK-RO\""
+   :cite/claim "The SEC prints 55 JEOLLYEOK-RO as the business address -- the same street GLEIF records in Korean as 전력로 55 (gleif-address-jeollyeok)."}
+  {:cite/id "sec-city"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0000887225.json"
+   :cite/expect-substring "\"city\":\"NAJU-SI\""
+   :cite/claim "City NAJU-SI, matching what GLEIF independently recorded."}
+  {:cite/id "sec-zip"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000887225.json"
+   :cite/expect-substring "\"zipCode\":\"58322\""
+   :cite/claim "Postal code 58322, matching GLEIF's postalCode."}
+  {:cite/id "sec-incorporation"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000887225.json"
+   :cite/expect-substring "\"stateOfIncorporationDescription\":\"Korea, Republic of\""
+   :cite/claim "Incorporated in the Republic of Korea."}
+  {:cite/id "sec-20f"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0000887225.json"
+   :cite/expect-substring "\"20-F\""
+   :cite/claim "The recent-filings list carries a 20-F -- the annual report form reserved for foreign private issuers."}
+  {:cite/id "issuer-legalnotice-title"
+   :cite/authority :issuer
+   :cite/row-kind :identity
+   :cite/url "https://www.kepco.co.kr/home/service/legalnotice/conts.do"
+   :cite/expect-substring "<title>법적고지 | 한국전력공사</title>"
+   :cite/claim "The page this repository archives still serves the Legal Notice (법적고지) and prints the Korean legal name in its title -- as raw UTF-8, unlike GLEIF's escapes."}
+  {:cite/id "issuer-copyright"
+   :cite/authority :issuer
+   :cite/row-kind :identity
+   :cite/url "https://www.kepco.co.kr/home/service/legalnotice/conts.do"
+   :cite/expect-substring "저작권 또한 한국전력공사에 귀속됩니다."
+   :cite/claim "The Legal Notice says copyright vests in 한국전력공사 -- the issuer names the LEI entity in its own legal text."}
+ ]}
